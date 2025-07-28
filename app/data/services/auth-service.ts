@@ -11,7 +11,7 @@ interface LoginUserProps {
 }
 
 export async function registerUserService(userData: RegisterUserProps) {
-  const res =  await await fetch('/api/user/RegisterUser', {
+  const res =  await fetch('/api/user/RegisterUser', {
     method: 'POST',
     credentials: 'include',
     headers: {
