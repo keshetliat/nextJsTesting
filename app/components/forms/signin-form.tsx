@@ -84,14 +84,14 @@ export function SigninForm() {
           ...INITIAL_STATE,
           success: true,
           message: "Login successful!",
-          redirect: "/dashboard", //maybe in the future use this state on useEffect
+          redirect: "/devices", //maybe in the future use this state on useEffect
         });
-        window.location.href = "/dashboard";
+        window.location.href = "/devices";
         return;
       } else {
         setFormState({
           ...INITIAL_STATE,
-          strapiErrors: { message: response?.error || "Login failed." },
+          strapiErrors: { message: response?.error || response?.message },
           success: false,
         });
       }

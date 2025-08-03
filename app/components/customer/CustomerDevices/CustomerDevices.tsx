@@ -7,21 +7,34 @@ import CustomerDeviceItem from "./CustomerDeviceItem";
 export default function CustomerDevices() {
 
     const [devices, setDevices] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchDevices = async () => {
-            const devices = await getCustomerDevices();
-            setDevices(devices);
-            console.log(devices);
+            try {
+                const devices = await getCustomerDevices();
+                setDevices(devices || []); 
+            } catch (err) {
+                console.error("Failed to fetch devices", err);
+                setDevices([]);
+            } finally {
+                setLoading(false); 
+            }
         }
         fetchDevices();
     }, []);
 
-return (
-    <div>
-        {devices.map((device) => (
-           <CustomerDeviceItem key={device.CustomerDeviceID} device={device} />
-        ))}
+    return (
+        <div>
+        {loading ? (
+            <div>Loading devices...</div>
+        ) : devices.length > 0 ? (
+            devices.map((device) => (
+                <CustomerDeviceItem key={device.CustomerDeviceID} device={device} />
+            ))
+        ) : (
+            <div>No devices found</div> 
+        )}
     </div>
-)
+    )
 }

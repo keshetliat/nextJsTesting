@@ -72,7 +72,7 @@ export async function registerUserAction(prevState: any, formData: FormData) {
             ...prevState,
             success: true,
             message: "Registration successful!",
-            redirect: "/dashboard"
+            redirect: "/devices"
         };
     } else {
         return {
@@ -139,7 +139,7 @@ export async function loginUserAction(prevState: any, formData: FormData) {
             ...prevState,
             success: true,
             message: "Login successful!",
-            redirect: "/dashboard"
+            redirect: "/devices"
         };
     } else {
         return {
