@@ -1,4 +1,5 @@
-import { TokenType } from "../../enums/enums"; 
+import { TokenType } from "@/app/enums/enums";
+import { ROUTES } from "@/app/constants/routes";
 
 export async function getCustomerDevices() {
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:9090';
@@ -44,12 +45,12 @@ export async function getCustomerDevices() {
         return await retryRes.json();
       } else {
         // Refresh failed, redirect to login
-        window.location.href = '/signin';
+        window.location.href = ROUTES.SIGNIN;
         return null;
       }
     } catch (error) {
       console.error('Refresh token error:', error);
-      window.location.href = '/signin';
+      window.location.href = ROUTES.SIGNIN;
       return null;
     }
   }
@@ -58,7 +59,7 @@ export async function getCustomerDevices() {
   if (data.tokenType === TokenType.RefreshTokenNotValid || 
       data.tokenType === TokenType.GeneralTokenError) {
     console.log('Token error:', data.error);
-    window.location.href = '/signin';
+    window.location.href = ROUTES.SIGNIN;
     return null;
   }
   
