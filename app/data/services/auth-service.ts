@@ -34,7 +34,6 @@ export async function loginUserService(userData: LoginUserProps) {
   return res.json();
 }
 
-// Additional service functions using apiClient for authenticated requests
 // export async function getUserProfile() {
 //   try {
 //     const response = await apiClient.fetch('/user/profile');

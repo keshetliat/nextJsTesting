@@ -1,24 +1,21 @@
 'use client';
 
 import { useState } from "react";
-import Link from "next/link";
-import { loginUserService } from "@/app/data/services/auth-service";
-import { ZodErrors } from "@/app/components/custom/zod-errors";
-import { StrapiErrors } from "@/app/components/custom/strapi-errors";
 import { SubmitButton } from "@/app/components/custom/submit-button";
-import { z } from "zod";
+import { StrapiErrors } from "@/app/components/custom/strapi-errors";
+import { ZodErrors } from "@/app/components/custom/zod-errors";
+import { loginUserService } from "@/app/data/services/auth-service";
+import { loginSchema } from "@/app/types/login-schema";
+import { Label } from "@/app/components/ui/ui/label";
+import { Input } from "@/app/components/ui/ui/input";
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/app/components/ui/ui/card";
-import { Label } from "@/app/components/ui/ui/label";
-import { Input } from "@/app/components/ui/ui/input";
 
-// Define the type for zodErrors
 interface ZodErrorFields {
   UserName?: string[];
   Password?: string[];
@@ -32,30 +29,23 @@ interface FormState {
   message: string | null;
 }
 
-const INITIAL_STATE: FormState = {
+const INITIAL_STATE = {
+  data: null,
   zodErrors: null,
   strapiErrors: null,
+  message: "",
   success: false,
-  redirect: null,
-  message: null,
+  redirect: "",
 };
 
-const schemaLogin = z.object({
-  UserName: z.string().min(3).max(50, {
-    message: "Username/Email must be between 3 and 50 characters",
-  }),
-  Password: z.string().min(6).max(100, {
-    message: "Password must be between 6 and 100 characters",
-  }),
-});
-
-export function SigninForm() {
+export default function SigninForm() {
   const [formState, setFormState] = useState<FormState>(INITIAL_STATE);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
+    setFormState(INITIAL_STATE);
 
     const formData = new FormData(e.currentTarget);
     const userData = {
@@ -63,7 +53,8 @@ export function SigninForm() {
       Password: formData.get("Password") as string,
     };
 
-    const result = schemaLogin.safeParse(userData);
+    // Client-side validation
+    const result = loginSchema.safeParse(userData);
 
     if (!result.success) {
       setFormState({
@@ -79,91 +70,95 @@ export function SigninForm() {
     try {
       const response = await loginUserService(userData);
 
-      if (response?.message === "SuccessLogin" || response?.message === "Login successful!") {
+      if (!response) {
+        setFormState({
+          ...INITIAL_STATE,
+          strapiErrors: null,
+          zodErrors: null,
+          message: "Ops! Something went wrong. Please try again.",
+        });
+      } else if (response.error) {
+        setFormState({
+          ...INITIAL_STATE,
+          strapiErrors: { message: response.error },
+          zodErrors: null,
+          message: "Failed to Login.",
+        });
+      } else if (response.message === "SuccessLogin") {
         setFormState({
           ...INITIAL_STATE,
           success: true,
           message: "Login successful!",
-          redirect: "/devices", //maybe in the future use this state on useEffect
+          redirect: "/dashboard",
         });
-        window.location.href = "/devices";
+        window.location.href = "/dashboard";
         return;
       } else {
         setFormState({
           ...INITIAL_STATE,
-          strapiErrors: { message: response?.error || response?.message },
-          success: false,
+          strapiErrors: { message: response.message || "Failed to Login." },
+          zodErrors: null,
+          message: "Failed to Login.",
         });
       }
     } catch (error) {
       setFormState({
         ...INITIAL_STATE,
-        strapiErrors: { message: "Something went wrong." },
-        success: false,
+        strapiErrors: { message: "An error occurred. Please try again." },
+        zodErrors: null,
+        message: "Failed to Login.",
       });
-    }
-    finally {
+    } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="w-full max-w-md">
-      <form onSubmit={handleSubmit}>
-        <Card>
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-3xl font-bold">Sign In</CardTitle>
-            <CardDescription>
-              Enter your credentials to access your account
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="UserName">UserName</Label>
+    <Card className="w-[350px]">
+      <CardHeader>
+        <CardTitle>Login</CardTitle>
+        <CardDescription>Enter your credentials to access your account</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit}>
+          <div className="grid w-full items-center gap-4">
+            <div className="flex flex-col space-y-1.5">
+              <Label htmlFor="UserName">Username</Label>
               <Input
                 id="UserName"
                 name="UserName"
-                type="text"
-                placeholder="username or email"
+                placeholder="Enter your username"
                 required
               />
-              <ZodErrors error={formState?.zodErrors?.UserName ?? []} />
+              <ZodErrors error={formState.zodErrors?.UserName ?? []} />
             </div>
-            <div className="space-y-2">
+            <div className="flex flex-col space-y-1.5">
               <Label htmlFor="Password">Password</Label>
               <Input
                 id="Password"
                 name="Password"
                 type="password"
-                placeholder="Password"
+                placeholder="Enter your password"
                 required
               />
-              <ZodErrors error={formState?.zodErrors?.Password ?? []} />
+              <ZodErrors error={formState.zodErrors?.Password ?? []} />
             </div>
-          </CardContent>
-          <CardFooter className="flex flex-col">
-            <SubmitButton
-              className="w-full"
-              text="Sign In"
-              loadingText="Signing in..."
-              loading={loading}
+            <SubmitButton 
+              loading={loading} 
+              text="Login"
+              loadingText="Logging in..."
             />
-            <StrapiErrors error={formState?.strapiErrors ? { ...formState.strapiErrors, name: '', status: null } : null} />
-            {formState?.success && formState?.message && (
-              <StrapiErrors
-                error={{ message: formState.message, name: '', status: null }}
-                isSuccess={true}
-              />
-            )}
-          </CardFooter>
-        </Card>
-        <div className="mt-4 text-center text-sm">
-          Don't have an account?
-          <Link className="underline ml-2" href="/signup">
-            Sign Up
-          </Link>
-        </div>
-      </form>
-    </div>
+            <StrapiErrors 
+              error={formState.strapiErrors ? {
+                message: formState.strapiErrors.message,
+                name: '',
+                status: null
+              } : null} 
+              isSuccess={formState.success} 
+            />
+          </div>
+        </form>
+      </CardContent>
+    </Card>
   );
 }
