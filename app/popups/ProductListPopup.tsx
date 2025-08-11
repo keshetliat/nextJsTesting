@@ -2,14 +2,17 @@
 import React from 'react';
 import { Product } from '../types';
 import '../styles/ProductListRendering.scss';
-
+import Stars from '../components/reviews/stars';
+import AddCart from '../components/cart/add-cart';
 interface ProductListPopupProps {
   selectedProduct: Product;
   onClose: () => void;
 }
 
 export default function ProductListPopup({ selectedProduct, onClose }: ProductListPopupProps) {
+  const baseUrl="https://qa-images-evrit.yit.co.il/"
   if (!selectedProduct) return null;
+
   return (
     <div
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 cursor-pointer"
@@ -29,12 +32,16 @@ export default function ProductListPopup({ selectedProduct, onClose }: ProductLi
         </button>
         <h2 className="text-2xl font-bold mb-2">{selectedProduct.ProductName}</h2>
         <img
-          src={`https://qa-images-evrit.yit.co.il/${selectedProduct.Image}`}
+          src={baseUrl + selectedProduct.Image}
           alt={selectedProduct.ProductName}
           className="w-full h-64 object-cover object-center mb-4 bg-gray-100 rounded"
         />
+        <AddCart product={selectedProduct} />
         <div className="mb-2 text-sm text-gray-600">
           <strong>סופרים:</strong> {selectedProduct.Authors?.map(a => a.AuthorName).join(', ')}
+        </div>
+        <div>
+          <Stars rating={selectedProduct.AvgReviews || 0} totalRevies={selectedProduct.CountReviews || 0} />
         </div>
         <div className="mb-2 text-sm text-gray-600">
           <strong>שנת הוצאה:</strong> {selectedProduct.PublishYear}

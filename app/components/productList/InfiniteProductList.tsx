@@ -7,8 +7,8 @@ import '../../styles/ProductListRendering.scss';
 import ProductListPopup from '../../popups/ProductListPopup';
 import { useDispatch, useSelector } from 'react-redux';
 import { openPopup, closePopup } from '../../../redux/slices/productListSlice';
-import { useCategory } from '../../category/categoryContex';
 import { config } from '@/app/config/config';
+import { RootState } from '../../../redux/store';
 
 interface InfiniteProductListProps {
   categoryId: string;
@@ -19,7 +19,9 @@ const baseUrl = config.apiBaseUrl
 
 export default function InfiniteProductList({ categoryId, initialProducts }: InfiniteProductListProps) {
   const dispatch = useDispatch();
-  const { selectedProduct, setSelectedProduct } = useCategory();
+  
+  // Use Redux state for popup rendering since click handlers dispatch Redux actions
+  const reduxSelectedProduct = useSelector((state: RootState) => state.popup.selectedProduct);
   
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [loading, setLoading] = useState(false);
@@ -117,9 +119,9 @@ export default function InfiniteProductList({ categoryId, initialProducts }: Inf
         </div>
       )}
       
-      {selectedProduct && (
+      {reduxSelectedProduct && (
         <ProductListPopup
-          selectedProduct={selectedProduct}
+          selectedProduct={reduxSelectedProduct}
           onClose={() => dispatch(closePopup())}
         />
       )}

@@ -60,7 +60,6 @@ export async function getCustomerDevices() {
   // Handle other token errors
   if (data.tokenType === TokenType.RefreshTokenNotValid || 
       data.tokenType === TokenType.GeneralTokenError) {
-    console.log('Token error:', data.error);
     window.location.href = ROUTES.SIGNIN;
     return null;
   }
@@ -125,7 +124,6 @@ export async function getCustomerProducts() {
   // Handle other token errors
   if (data.tokenType === TokenType.RefreshTokenNotValid || 
       data.tokenType === TokenType.GeneralTokenError) {
-    console.log('Token error:', data.error);
     window.location.href = ROUTES.SIGNIN;
     return null;
   }

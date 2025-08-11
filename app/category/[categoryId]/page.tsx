@@ -3,6 +3,7 @@ import InfiniteProductList from '../../components/productList/InfiniteProductLis
 import { notFound } from 'next/navigation';
 import { CategoryProvider } from '../categoryContex';
 import { config } from '@/app/config/config';
+import CartDrawer from '@/app/components/cart/cart-drawer';
 
 interface CategoryPageProps {
   params: { categoryId: string };
@@ -27,6 +28,11 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
   return (
     <CategoryProvider>
+      <ul>
+      <li>
+            <CartDrawer />
+          </li>
+      </ul>
       <main className="container mx-auto p-4">
         <h1 className="text-3xl font-bold mb-6">Product List for Category {categoryId}</h1>
         <InfiniteProductList categoryId={categoryId} initialProducts={products} />

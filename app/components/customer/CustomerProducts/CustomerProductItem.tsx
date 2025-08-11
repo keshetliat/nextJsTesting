@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import ReviewForm from '@/app/components/forms/review-form';
+// import ReviewForm from '@/app/components/forms/review-form';
+import ReviewsForm from '@/app/components/reviews/reviews-form';
 import { config } from '@/app/config/config';
 
 interface CustomerProductItemProps {
@@ -55,11 +56,12 @@ export default function CustomerProductItem({ product }: CustomerProductItemProp
 
             {isReviewFormOpen && (
                 <div className="mt-4 border-t pt-4">
-                    <ReviewForm
+                    {/* <ReviewForm
                         productID={product.ProductID}
                         isOpen={isReviewFormOpen}
                         onClose={() => setIsReviewFormOpen(false)}
-                    />
+                    /> */}
+                    <ReviewsForm productID={product.ProductID} />
                 </div>
             )}
         </div>

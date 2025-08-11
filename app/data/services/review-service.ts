@@ -69,7 +69,6 @@ export async function addCustomerReview(reviewData: ReviewData, productID: strin
   // Handle other token errors
   if (data.tokenType === TokenType.RefreshTokenNotValid || 
       data.tokenType === TokenType.GeneralTokenError) {
-    console.log('Token error:', data.error);
     window.location.href = ROUTES.SIGNIN;
     return null;
   }
