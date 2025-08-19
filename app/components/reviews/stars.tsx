@@ -52,7 +52,12 @@ export default function Stars({ rating, totalRevies, size = 14 }: {
                     </div>
                 );
             })}
-            <span className="text-secondary-foreground font-bold text-sm ml-2 px-4">סה"כ ביקורות: {totalRevies}</span>
+            {
+                totalRevies ? (
+                    <span className="text-secondary-foreground font-bold text-sm ml-2 px-4">סה"כ ביקורות: {totalRevies}</span>
+                ) : null
+            }
+           
         </div>
     )
 }

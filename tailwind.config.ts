@@ -9,9 +9,11 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        primary: '#3b82f6',      // Blue color
-        secondary: '#6b7280',    // Gray color
-        accent: '#f59e0b',       // Amber color
+        primary: '#1C1C1C',  //Light blue   
+        secondary: '#3DB5FF',    //Black
+        gray: '#939393',
+        white: '#FFFFFF',
+        pink: '#fa2297'    
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',

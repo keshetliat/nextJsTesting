@@ -24,15 +24,18 @@ export default function Header() {
     return (
         <div>
            <nav className="py-2 overflow-auto">
-            <ul className="flex gap-6 text-sm font-bold">
+            <ul className="flex gap-6 text-sm font-bold text-secondary">
                 {
                    HEADER_LINKS.slice().reverse().map((link: any) => (
                     <motion.li whileTap={{scale: 0.95}} key={link.id}>
                         <Link 
                             className={cn(
                                 "flex gap-1 flex-col items-center relative", 
-                                pathname === link.path && "text-primary"
+                                pathname === link.path && "!text-primary"
                             )}
+                            style={{
+                                color: pathname === link.path ? '#3b82f6' : '#10abd9'
+                            }}
                             href={link.path}
                             onClick={handleLinkClick}
                         >
