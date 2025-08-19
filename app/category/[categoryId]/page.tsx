@@ -1,14 +1,18 @@
 import { Product } from '../../types';
-import ProductListRendering from '../../components/productList/ProductListRendering';
+import InfiniteProductList from '../../components/productList/InfiniteProductList';
 import { notFound } from 'next/navigation';
 import { CategoryProvider } from '../categoryContex';
+import { config } from '@/app/config/config';
+import CartDrawer from '@/app/components/cart/cart-drawer';
 
 interface CategoryPageProps {
   params: { categoryId: string };
 }
 
+const baseUrl = config.apiBaseUrl
+
 async function getProducts(categoryId: string): Promise<Product[]> {
-  const res = await fetch(`https://evritapiqa.e-vrit.co.il/category/${categoryId}/products?`, { cache: 'no-store' });
+  const res = await fetch(`${baseUrl}/category/${categoryId}/products`, { cache: 'no-store' });
   if (!res.ok) return [];
   const data = await res.json();
   return data.Items || [];
@@ -24,9 +28,14 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
   return (
     <CategoryProvider>
+      <ul>
+      <li>
+            <CartDrawer />
+          </li>
+      </ul>
       <main className="container mx-auto p-4">
         <h1 className="text-3xl font-bold mb-6">Product List for Category {categoryId}</h1>
-        <ProductListRendering products={products} />
+        <InfiniteProductList categoryId={categoryId} initialProducts={products} />
       </main>
     </CategoryProvider>
   );

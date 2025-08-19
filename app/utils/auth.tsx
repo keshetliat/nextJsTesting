@@ -1,6 +1,9 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
+import jwt from 'jsonwebtoken';
+import { TokenType } from '@/app/enums/enums';
+import { ROUTES } from '@/app/constants/routes';
 
 // Types
 interface LoginUserProps {
@@ -24,7 +27,7 @@ export const apiClient = {
     // Handle authentication errors
     if (response.status === 401) {
       // Token expired or invalid, redirect to login
-      window.location.href = '/signin';
+      window.location.href = ROUTES.SIGNIN;
       return null;
     }
     
@@ -32,10 +35,82 @@ export const apiClient = {
   },
 };
 
-// Auth management utilities
+// Enhanced API client with automatic token refresh
+export const apiClientWithRefresh = {
+  fetch: async (url: string, options: RequestInit = {}) => {
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:9090';
+    const fullUrl = url.startsWith('http') ? url : `${baseUrl}${url}`;
+    
+    const defaultOptions = {
+      credentials: 'include' as RequestCredentials,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    };
+
+    // First attempt
+    let response = await fetch(fullUrl, { ...defaultOptions, ...options });
+    let data = await response.json();
+    
+    // Check if access token is expired
+    if (data.tokenType === TokenType.AccessTokenNotValid) {
+      try {
+        // Try to refresh token
+        const refreshResponse = await fetch(`${baseUrl}/user/RefreshLogin`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        const refreshData = await refreshResponse.json();
+        
+        if (refreshData.success || refreshData.message === "SuccessLogin") {
+          // Retry original request with new token
+          response = await fetch(fullUrl, { ...defaultOptions, ...options });
+          data = await response.json();
+        } else {
+          // Refresh failed, redirect to login
+          window.location.href = ROUTES.SIGNIN;
+          return null;
+        }
+      } catch (error) {
+        console.error('Token refresh failed:', error);
+        window.location.href = ROUTES.SIGNIN;
+        return null;
+      }
+    }
+    
+    // Handle other token errors
+    if (data.tokenType === TokenType.RefreshTokenNotValid || 
+        data.tokenType === TokenType.GeneralTokenError) {
+      window.location.href = ROUTES.SIGNIN;
+      return null;
+    }
+    
+    return { response, data };
+  },
+};
+
+// Check if JWT token is expired (client-side)
+export function isTokenExpired(token: string): boolean {
+  try {
+    const decoded = jwt.decode(token) as any;
+    if (!decoded || !decoded.exp) return true;
+    
+    const currentTime = Math.floor(Date.now() / 1000);
+    return decoded.exp < currentTime;
+  } catch (error) {
+    return true;
+  }
+}
+
+// Enhanced auth manager with token validation
 export const authManager = {
   // Check if user is authenticated by making a request to a protected endpoint
-  isAuthenticated: async (): Promise<boolean> => {
+  isAuthenticated: async () => {
     try {
       const response = await apiClient.fetch('/user/verify-token');
       return response?.ok || false;
@@ -68,7 +143,7 @@ export const authManager = {
       console.error('Logout error:', error);
     } finally {
       // Always redirect to login after logout attempt
-      window.location.href = '/signin';
+      window.location.href = ROUTES.SIGNIN;
     }
   },
 
@@ -83,58 +158,42 @@ export const authManager = {
       return false;
     }
   },
+
+  // Check token expiration and redirect if needed
+  checkTokenExpiration: () => {
+    if (typeof window === 'undefined') return; // Server-side, skip
+    
+    // Get token from cookie (if accessible)
+    const cookies = document.cookie.split(';');
+    const jwtCookie = cookies.find(cookie => cookie.trim().startsWith('jwt='));
+    
+    if (jwtCookie) {
+      const token = jwtCookie.split('=')[1];
+      if (isTokenExpired(token)) {
+        // Token is expired, redirect to login
+        window.location.href = ROUTES.SIGNIN;
+      }
+    }
+  },
 };
 
 // Route protection hook for Next.js
 export const useAuthGuard = () => {
-  const router = useRouter();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkAuth = async () => {
-      const isAuth = await authManager.isAuthenticated();
-      if (!isAuth) {
-        router.push('/signin');
-      }
+      const authStatus = await authManager.isAuthenticated();
+      setIsAuthenticated(authStatus);
+      setLoading(false);
     };
 
     checkAuth();
-  }, [router]);
+  }, []);
+
+  return { isAuthenticated, loading };
 };
-
-// HOC for protecting pages
-export const withAuth = (WrappedComponent: React.ComponentType) => {
-  return function ProtectedRoute(props: any) {
-    const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-    const router = useRouter();
-
-    useEffect(() => {
-      const checkAuth = async () => {
-        const isAuth = await authManager.isAuthenticated();
-        if (!isAuth) {
-          router.push('/signin');
-        } else {
-          setIsAuthenticated(true);
-        }
-      };
-
-      checkAuth();
-    }, [router]);
-
-    // Show loading or nothing while checking authentication
-    if (isAuthenticated === null) {
-      return <div>Loading...</div>; // Or your loading component
-    }
-
-    return isAuthenticated ? <WrappedComponent {...props} /> : null;
-  };
-};
-
-// Legacy service function for compatibility (you can remove this if not used elsewhere)
-export async function loginUserService(userData: LoginUserProps) {
-  return authManager.login(userData);
-}
-
-// Utilities for cookie-based JWT authentication (no localStorage, no token in JS)
 
 // Server-side: Check if JWT cookie exists (for middleware, server actions, etc.)
 export function hasJwtCookie(cookies: { get: (name: string) => { value?: string } | undefined }): boolean {
@@ -142,11 +201,13 @@ export function hasJwtCookie(cookies: { get: (name: string) => { value?: string 
 }
 
 // Client-side: Redirect helper (optional, for use in useEffect after login/logout)
-export function redirectTo(path: string) {
+export const redirectToLogin = () => {
   if (typeof window !== 'undefined') {
-    window.location.href = path;
+    window.location.href = ROUTES.SIGNIN;
   }
-}
+};
 
-// Note: All authentication is handled via HttpOnly cookies set by the backend.
-// No JWT is ever stored or read in JS. All fetches should use credentials: 'include'.
+// Logout service
+export async function logoutUserService() {
+  return await authManager.logout();
+}

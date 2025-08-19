@@ -9,11 +9,11 @@ interface ProductListItemProps {
 }
 
 export default function ProductListItem({ product, onClick }: ProductListItemProps) {
-    const baseUrl="https://qa-images-evrit.yit.co.il/"
+  const baseUrl = "https://qa-images-evrit.yit.co.il/"
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col cursor-pointer" onClick={onClick}>
+    <div id={product.ProductID.toString()} className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col cursor-pointer" onClick={onClick}>
       <Image
-        src={baseUrl+product.Image}
+        src={baseUrl + product.Image}
         alt={product.ProductName}
         width={400}
         height={400}

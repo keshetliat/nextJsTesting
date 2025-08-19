@@ -5,8 +5,8 @@ import Link from "next/link";
 import { registerUserService } from "@/app/data/services/auth-service";
 import { ZodErrors } from "@/app/components/custom/zod-errors";
 import { StrapiErrors } from "@/app/components/custom/strapi-errors";
-import { z } from "zod";
 import { SubmitButton } from "@/app/components/custom/submit-button";
+import { registerSchema } from "@/app/types/register-schema";
 import {
   Card,
   CardContent,
@@ -40,16 +40,7 @@ const INITIAL_STATE = {
   message: null,
 };
 
-const schemaRegister = z.object({
-  UserName: z.string().min(3).max(20, {
-    message: "UserName must be between 3 and 20 characters",
-  }),
-  Password: z.string().min(6).max(100, {
-    message: "Password must be between 6 and 100 characters",
-  }),
-});
-
-export function SignupForm() {
+export default function SignupForm() {
   const [formState, setFormState] = useState<FormState>(INITIAL_STATE);
   const [loading, setLoading] = useState(false);
 
@@ -63,7 +54,7 @@ export function SignupForm() {
       Password: formData.get("Password") as string,
     };
 
-    const result = schemaRegister.safeParse(userData);
+    const result = registerSchema.safeParse(userData);
 
     if (!result.success) {
       setFormState({
@@ -98,73 +89,68 @@ export function SignupForm() {
     } catch (error) {
       setFormState({
         ...INITIAL_STATE,
-        strapiErrors: { message: "Something went wrong." },
+        strapiErrors: { message: "An error occurred. Please try again." },
         success: false,
       });
-    }
-    finally {
+    } finally {
       setLoading(false);
     }
-
   };
 
   return (
-    <div className="w-full max-w-md">
-      <form onSubmit={handleSubmit}>
-        <Card>
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-3xl font-bold">Sign Up</CardTitle>
-            <CardDescription>
-              Enter your details to create a new account
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="UserName">UserName</Label>
+    <Card className="w-[350px]">
+      <CardHeader>
+        <CardTitle>Register</CardTitle>
+        <CardDescription>Create a new account</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit}>
+          <div className="grid w-full items-center gap-4">
+            <div className="flex flex-col space-y-1.5">
+              <Label htmlFor="UserName">Username</Label>
               <Input
                 id="UserName"
                 name="UserName"
-                type="text"
-                placeholder="name@example.com"
+                placeholder="Enter your username"
                 required
               />
-              <ZodErrors error={formState?.zodErrors?.UserName ?? []} />
+              <ZodErrors error={formState.zodErrors?.UserName ?? []} />
             </div>
-            <div className="space-y-2">
+            <div className="flex flex-col space-y-1.5">
               <Label htmlFor="Password">Password</Label>
               <Input
                 id="Password"
                 name="Password"
                 type="password"
-                placeholder="Password"
+                placeholder="Enter your password"
                 required
               />
-              <ZodErrors error={formState?.zodErrors?.Password ?? []} />
+              <ZodErrors error={formState.zodErrors?.Password ?? []} />
             </div>
-          </CardContent>
-          <CardFooter className="flex flex-col">
-            <SubmitButton
-              className="w-full"
-              text="Sign Up"
-              loadingText="Signing in..."
-              loading={loading}
+            <SubmitButton 
+              loading={loading} 
+              text="Register"
+              loadingText="Registering..."
             />
-            <StrapiErrors error={formState?.strapiErrors ? { ...formState.strapiErrors, name: '', status: null } : null} />
-            {formState?.success && formState?.message && (
-              <StrapiErrors
-                error={{ message: formState.message, name: '', status: null }}
-                isSuccess={true}
-              />
-            )}
-          </CardFooter>
-        </Card>
-        <div className="mt-4 text-center text-sm">
-          Have an account?
-          <Link className="underline ml-2" href="/signin">
-            Sign Up
+            <StrapiErrors 
+              error={formState.strapiErrors ? {
+                message: formState.strapiErrors.message,
+                name: '',
+                status: null
+              } : null} 
+              isSuccess={formState.success} 
+            />
+          </div>
+        </form>
+      </CardContent>
+      <CardFooter>
+        <div className="text-sm text-muted-foreground">
+          Already have an account?{" "}
+          <Link href="/signin" className="text-primary hover:underline">
+            Sign in
           </Link>
         </div>
-      </form>
-    </div>
+      </CardFooter>
+    </Card>
   );
 }
